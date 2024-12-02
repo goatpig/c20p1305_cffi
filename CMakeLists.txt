@@ -1,0 +1,49 @@
+CMAKE_MINIMUM_REQUIRED(VERSION 3.5) # ubuntu 16 version
+SET(CMAKE_CXX_STANDARD 17)
+
+SET(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
+OPTION(ENABLE_TESTS "enable building of tests" OFF)
+SET(LIBBTC_PATH "../libbtc" CACHE STRING "path to libbtc source")
+SET(ARMORY_PATH "../BitcoinArmory" CACHE STRING "path to BitcoinArmory source")
+
+#### detect build env ####
+PROJECT(c20p1305deps C CXX)
+IF (CMAKE_SYSTEM_NAME STREQUAL "MSYS")
+    SET(MINGW 1)
+ENDIF ()
+
+SET(CMAKE_FIND_LIBRARY_PREFIXES "lib")
+SET(CMAKE_FIND_LIBRARY_SUFFIXES .a .so)
+
+#### armory ####
+IF (NOT IS_ABSOLUTE ${ARMORY_PATH})
+    GET_FILENAME_COMPONENT (ARMORY_PATH ${ARMORY_PATH} REALPATH)
+ENDIF ()
+
+#append cppForSwig
+CMAKE_PATH (APPEND ARMORY_PATH ${ARMORY_PATH} "cppForSwig")
+MESSAGE("armory path: ${ARMORY_PATH}")
+
+IF (NOT EXISTS ${ARMORY_PATH})
+    MESSAGE (FATAL_ERROR "Could not find BitcoinArmory source")
+ENDIF ()
+
+#hkdf and chachapoly source paths
+CMAKE_PATH (APPEND HKDF_PATH ${ARMORY_PATH} "hkdf")
+CMAKE_PATH (APPEND CHACHA_PATH ${ARMORY_PATH} "chacha20poly1305")
+
+#### libbtc ####
+IF (NOT IS_ABSOLUTE ${LIBBTC_PATH})
+    GET_FILENAME_COMPONENT (LIBBTC_PATH ${LIBBTC_PATH} REALPATH)
+ENDIF ()
+
+FIND_LIBRARY (LIBBTC_LIBPATH btc HINTS
+    ${LIBBTC_PATH}
+    ${LIBBTC_PATH}/.libs
+)
+IF (NOT LIBBTC_LIBPATH)
+    MESSAGE (FATAL_ERROR "Could not find libbtc")
+ENDIF ()
+
+ADD_SUBDIRECTORY(src)
