@@ -96,9 +96,13 @@ The solution is to first build a shim static library with all the useful code vi
 	```
 2. Build the definition file
 	From Windows PowerShell, within the c20p1305/build/src folder:
-	`lib.exe /MACHINE:x64 /def:c20p1305_deps.def`
-3. Build the CFFI package
+	```
+	lib.exe /MACHINE:x64 /def:c20p1305_deps.def
+ 	```
+4. Build the CFFI package
 	Still from Windows PowerShell, within the c20p1305/cffi folder:
-	`python c20p1305_cffi.py`
-4. You should have a c20p1305.cpython-*your-py-version*-mscv.dll, copy it to BitcoinArmory/armoryengine
+	```
+	python c20p1305_cffi.py
+ 	```
+6. You should have a c20p1305.cpython-*your-py-version*-mscv.dll, copy it to BitcoinArmory/armoryengine
 	
