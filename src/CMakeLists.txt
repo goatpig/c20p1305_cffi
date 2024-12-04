@@ -10,7 +10,7 @@ LIST (APPEND C20P1305_SRC
 ADD_LIBRARY(c20p1305deps STATIC ${C20P1305_SRC})
 IF (MINGW)
     TARGET_LINK_OPTIONS(c20p1305deps
-        PROPERTIES -Wl,--output-def,src/libc20p1305deps.def
+        PUBLIC -Wl,--output-def,src/libc20p1305deps.def
     )
 ELSE ()
     TARGET_COMPILE_OPTIONS(c20p1305deps PUBLIC -fPIC)
