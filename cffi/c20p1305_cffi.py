@@ -26,6 +26,7 @@ import os
 import optparse
 import logging
 import sys
+import platform
 
 parser = optparse.OptionParser(usage="%prog [options]\n")
 parser.add_option("--libbtc_path", dest="libbtc_path", default="../../libbtc", type="str", help="path to libbtc source")
@@ -83,6 +84,31 @@ with open('cffi_declarations.cffi') as f:
 
     ffi.cdef(data)
 
+# distutils in windows and linux take slightly different args
+kwargs = {}
+if platform.system() == 'Windows':
+    kwargs = {
+        "library_dirs" : [
+            "../build/src",
+        ],
+        "libraries" : [
+            "libc20p1305deps"
+        ]
+    }
+else:
+    kwargs = {
+        "library_dirs" : [
+            "../build/src",
+            libbtc_libpath
+        ],
+        "runtime_library_dirs" : ["."],
+        "libraries" : [
+            "c20p1305deps",
+            "btc"
+        ]
+    }
+
+#set_source receives the distutils args
 ffi.set_source(
     "c20p1305",
     r'''
@@ -100,18 +126,8 @@ ffi.set_source(
         chachapoly_path,
         hkdf_path
     ],
-
-    #link time custom path for lib discovery
-    library_dirs = [
-        "../build/src",
-        libbtc_libpath
-        #"."
-        ],
-
-    runtime_library_dirs = ["."],
-
-    #dependencies
-    libraries = ["c20p1305deps", "btc"]
+    **kwargs
 )
 
+#this call generates c20p1305.c then feeds it to distutils
 ffi.compile(verbose=True)
