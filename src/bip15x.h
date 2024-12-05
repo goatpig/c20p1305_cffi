@@ -31,6 +31,7 @@ extern "C" {
 #define AAD_LEN 4
 
 BIP15X_API int lib_init(void);
+BIP15X_API void lib_free(void*);
 BIP15X_API struct chachapolyaead_ctx* new_chacha_ctx(void);
 BIP15X_API bool chacha_ctx_init(struct chachapolyaead_ctx*, const uint8_t *key, int keylen);
 

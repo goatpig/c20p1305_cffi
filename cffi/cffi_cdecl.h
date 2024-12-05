@@ -38,12 +38,19 @@ typedef struct bip151_channel_ {
 //setup
 size_t bip15x_init_lib(void);
 bip151_channel* bip151_channel_makenew(void);
+void bip151_cleanup_channel(bip151_channel*);
 
 //utils
 bool isNull(const void*);
-void freeBuffer(void*);
 btc_key* get_new_privkey(void);
 uint8_t* compute_pubkey(const btc_key*);
+
+/*
+buffers allocated by functions from bip15x.c have to be freed by freeLibBuffer
+buffers allocated by functions from cffi_cdef.c have to be freed by freeCffiBuffer
+*/
+void freeCffiBuffer(void*);
+void freeLibBuffer(void*);
 
 //channel encryption handshake
 uint8_t* bip151_channel_getencinit(bip151_channel*);

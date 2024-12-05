@@ -45,12 +45,17 @@ bool isNull(const void* ptr)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void freeBuffer(void* buffer)
+void freeCffiBuffer(void* buffer)
 {
    if (buffer == NULL) {
       return;
    }
    free(buffer);
+}
+
+void freeLibBuffer(void* buffer)
+{
+   lib_free(buffer);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -71,6 +76,25 @@ bip151_channel* bip151_channel_makenew()
    channel->privkey_ = new_privkey();
    channel->seqNum_ = 0;
    return channel;
+}
+
+void bip151_cleanup_channel(bip151_channel* channel)
+{
+   if (channel == NULL) {
+      return;
+   }
+
+   if (channel->privkey_ != NULL) {
+      lib_free(channel->privkey_);
+      channel->privkey_ = NULL;
+   }
+
+   if (channel->ctx_ != NULL) {
+      lib_free(channel->ctx_);
+      channel->ctx_ = NULL;
+   }
+
+   free (channel);
 }
 
 ////////////////////////////////////////////////////////////////////////////////

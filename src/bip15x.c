@@ -42,6 +42,14 @@ int lib_init()
    return POLY1305_TAGLEN;
 }
 
+void lib_free(void* buffer)
+{
+   if (buffer == NULL) {
+      return;
+   }
+   free(buffer);
+}
+
 struct chachapolyaead_ctx* new_chacha_ctx()
 {
    struct chachapolyaead_ctx* ctx = (struct chachapolyaead_ctx*)malloc(
