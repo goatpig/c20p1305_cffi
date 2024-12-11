@@ -37,8 +37,7 @@ void bip151_cleanup_channel(struct bip151_channel_*);
 
 //utils
 bool isNull(const void*);
-void freeCffiBuffer(void*);
-void freeLibBuffer(void*);
+void cleanupBuffer(void*);
 struct btc_key_* get_new_privkey(void);
 uint8_t* compute_pubkey(const struct btc_key_*);
 

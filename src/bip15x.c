@@ -42,14 +42,6 @@ int lib_init()
    return POLY1305_TAGLEN;
 }
 
-void lib_free(void* buffer)
-{
-   if (buffer == NULL) {
-      return;
-   }
-   free(buffer);
-}
-
 struct chachapolyaead_ctx* new_chacha_ctx()
 {
    struct chachapolyaead_ctx* ctx = (struct chachapolyaead_ctx*)malloc(
@@ -79,17 +71,7 @@ uint8_t* random_bytes(size_t len)
 }
 
 //// pubkey functions ////
-uint8_t* pubkey_from_privkey(const btc_key* privkey)
-{
-   uint8_t* pubkey = (uint8_t*)malloc(BIP151PUBKEYSIZE);
-   if (_pubkey_from_privkey(privkey, pubkey) == 0) {
-      free(pubkey);
-      return NULL;
-   }
-   return pubkey;
-}
-
-int _pubkey_from_privkey(const btc_key* privkey, uint8_t* dest)
+bool pubkey_from_privkey(const btc_key* privkey, uint8_t* dest)
 {
    secp256k1_pubkey btcPubKey;
    size_t pubKeySize = BIP151PUBKEYSIZE;
@@ -97,7 +79,7 @@ int _pubkey_from_privkey(const btc_key* privkey, uint8_t* dest)
    if (secp256k1_ec_pubkey_create(
       lib_ctx,
       &btcPubKey, privkey->privkey) == 0) {
-      return 0;
+      return false;
    }
 
    secp256k1_ec_pubkey_serialize(
@@ -106,43 +88,41 @@ int _pubkey_from_privkey(const btc_key* privkey, uint8_t* dest)
       &btcPubKey, SECP256K1_EC_COMPRESSED);
 
    if (pubKeySize != BIP151PUBKEYSIZE) {
-      return 0;
+      return false;
    }
 
-   return 1;
+   return true;
 }
 
-int ecdh_multiply(const btc_key* privkey, const uint8_t* pubkey, uint8_t* dest)
+bool ecdh_multiply(const btc_key* privkey, const uint8_t* pubkey, uint8_t* dest)
 {
    //check provided pubkey
    secp256k1_pubkey peerECDHPK;
    if (secp256k1_ec_pubkey_parse(
       lib_ctx, &peerECDHPK, pubkey, BIP151PUBKEYSIZE) == 0) {
-      return 0;
+      return false;
    }
 
    //ecdh with channel priv key
    if (secp256k1_ec_pubkey_tweak_mul(
       lib_ctx, &peerECDHPK, privkey->privkey) == 0) {
-      return 0;
+      return false;
    }
 
    size_t destSize = BIP151PUBKEYSIZE;
-   return secp256k1_ec_pubkey_serialize(
+   return (secp256k1_ec_pubkey_serialize(
       lib_ctx, dest, &destSize,
-      &peerECDHPK, SECP256K1_EC_COMPRESSED);
+      &peerECDHPK, SECP256K1_EC_COMPRESSED) == 1);
 }
 
 //// privkey functions ////
-btc_key* new_privkey()
+bool new_privkey(btc_key* key)
 {
-   btc_key* key = malloc(sizeof(btc_key));
    btc_privkey_init(key);
    if (!btc_privkey_gen(key)) {
-      free(key);
-      return NULL;
+      return false;
    }
-   return key;
+   return true;
 }
 
 bool verify_sig(uint8_t* payload, size_t len, const uint8_t* hash, const uint8_t* pubkey)
@@ -160,16 +140,10 @@ bool verify_sig(uint8_t* payload, size_t len, const uint8_t* hash, const uint8_t
    return btc_ecc_verify_sig(pubkey, true, hash, derSig, derSigSize);
 }
 
-uint8_t* sign(const btc_key* privkey, const uint8_t* hash)
+bool sign(const btc_key* privkey, const uint8_t* hash, uint8_t* dest)
 {
-   uint8_t* sig = (uint8_t*)malloc(BIP151PRVKEYSIZE*2);
-   size_t sigSize = 0;
-
-   if (btc_ecc_sign_compact(
-      privkey->privkey, hash, sig, &sigSize) == false) {
-      return NULL;
-   }
-   return sig;
+   size_t sigSize = BIP151PRVKEYSIZE*2;
+   return btc_ecc_sign_compact(privkey->privkey, hash, dest, &sigSize);
 }
 
 void privkey_cleanse(btc_key* key)

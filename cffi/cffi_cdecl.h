@@ -49,8 +49,7 @@ uint8_t* compute_pubkey(const btc_key*);
 buffers allocated by functions from bip15x.c have to be freed by freeLibBuffer
 buffers allocated by functions from cffi_cdef.c have to be freed by freeCffiBuffer
 */
-void freeCffiBuffer(void*);
-void freeLibBuffer(void*);
+void cleanupBuffer(void*);
 
 //channel encryption handshake
 uint8_t* bip151_channel_getencinit(bip151_channel*);

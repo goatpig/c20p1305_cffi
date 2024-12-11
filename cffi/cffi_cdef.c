@@ -29,13 +29,23 @@ void calc_sessionid(bip151_channel*);
 ////////////////////////////////////////////////////////////////////////////////
 btc_key* get_new_privkey()
 {
-   return new_privkey();
+   btc_key* key = malloc(sizeof(btc_key));
+   if (!new_privkey(key)) {
+      free(key);
+      key = NULL;
+   }
+   return key;
 }
 
 ////
 uint8_t* compute_pubkey(const btc_key* privkey)
 {
-   return pubkey_from_privkey(privkey);
+   uint8_t* pubkey = (uint8_t*)malloc(BIP151PUBKEYSIZE);
+   if (!pubkey_from_privkey(privkey, pubkey)) {
+      free(pubkey);
+      pubkey = NULL;
+   }
+   return pubkey;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -45,17 +55,12 @@ bool isNull(const void* ptr)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-void freeCffiBuffer(void* buffer)
+void cleanupBuffer(void* buffer)
 {
    if (buffer == NULL) {
       return;
    }
    free(buffer);
-}
-
-void freeLibBuffer(void* buffer)
-{
-   lib_free(buffer);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -72,8 +77,20 @@ size_t bip15x_init_lib()
 bip151_channel* bip151_channel_makenew()
 {
    bip151_channel* channel = (bip151_channel*)malloc(sizeof(bip151_channel));
-   channel->ctx_ = new_chacha_ctx();
-   channel->privkey_ = new_privkey();
+
+   //setup chacha setup
+   channel->ctx_ = (struct chachapolyaead_ctx*)malloc(
+      sizeof(struct chachapolyaead_ctx));
+   memset(channel->ctx_, 0, sizeof(struct chachapolyaead_ctx));
+
+   //setup channel private key
+   channel->privkey_ = malloc(sizeof(btc_key));
+   if (!new_privkey(channel->privkey_)) {
+      free(channel->privkey_);
+      free(channel);
+      return NULL;
+   }
+
    channel->seqNum_ = 0;
    return channel;
 }
@@ -85,23 +102,23 @@ void bip151_cleanup_channel(bip151_channel* channel)
    }
 
    if (channel->privkey_ != NULL) {
-      lib_free(channel->privkey_);
+      free(channel->privkey_);
       channel->privkey_ = NULL;
    }
 
    if (channel->ctx_ != NULL) {
-      lib_free(channel->ctx_);
+      free(channel->ctx_);
       channel->ctx_ = NULL;
    }
 
-   free (channel);
+   free(channel);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 uint8_t* bip151_channel_getencinit(bip151_channel* channel)
 {
    uint8_t* encinit = (uint8_t*)malloc(BIP151PUBKEYSIZE + 1);
-   if (_pubkey_from_privkey(channel->privkey_, encinit) == 0) {
+   if (!pubkey_from_privkey(channel->privkey_, encinit)) {
       free(encinit);
       return NULL;
    }
@@ -153,7 +170,7 @@ uint8_t* bip151_channel_getencack(bip151_channel* channel)
    {
       case CIPHERSUITE_CHACHA20POLY1305_OPENSSH:
       {
-         if (_pubkey_from_privkey(channel->privkey_, encinit) == 0) {
+         if (!pubkey_from_privkey(channel->privkey_, encinit)) {
             break;
          }
 
@@ -206,11 +223,11 @@ bool bip151_channel_generate_secret_chacha20poly1305_openssh(
       return false;
    }
 
-   if (channel == 0 || pubkey == 0) {
+   if (channel == NULL || pubkey == NULL) {
       return false;
    }
 
-   if (ecdh_multiply(channel->privkey_, pubkey, parseECDHMulRes) == 0) {
+   if (!ecdh_multiply(channel->privkey_, pubkey, parseECDHMulRes)) {
       return false;
    }
    memcpy(channel->sharedSecret_, parseECDHMulRes + 1, 32);
@@ -396,7 +413,12 @@ bool bip150_check_authpropose(const uint8_t* payload, size_t len,
 uint8_t* bip150_get_authreply(
    const bip151_channel* channel, const btc_key* privkey)
 {
-   return sign(privkey, channel->sessionID_);
+   uint8_t* sig = (uint8_t*)malloc(BIP151PRVKEYSIZE*2);
+   if (!sign(privkey, channel->sessionID_, sig)) {
+      free(sig);
+      sig = NULL;
+   }
+   return sig;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
