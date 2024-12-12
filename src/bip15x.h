@@ -31,19 +31,16 @@ extern "C" {
 #define AAD_LEN 4
 
 BIP15X_API int lib_init(void);
-BIP15X_API void lib_free(void*);
-BIP15X_API struct chachapolyaead_ctx* new_chacha_ctx(void);
 BIP15X_API bool chacha_ctx_init(struct chachapolyaead_ctx*, const uint8_t *key, int keylen);
 
-BIP15X_API btc_key* new_privkey(void);
+BIP15X_API bool new_privkey(btc_key*);
 BIP15X_API void privkey_cleanse(btc_key*);
 BIP15X_API uint8_t* random_bytes(size_t);
-BIP15X_API uint8_t* pubkey_from_privkey(const btc_key*);
-BIP15X_API int _pubkey_from_privkey(const btc_key*, uint8_t* dest);
-BIP15X_API int ecdh_multiply(const btc_key*, const uint8_t* pubkey, uint8_t* dest);
+BIP15X_API bool pubkey_from_privkey(const btc_key*, uint8_t* dest);
+BIP15X_API bool ecdh_multiply(const btc_key*, const uint8_t* pubkey, uint8_t* dest);
 
 BIP15X_API bool verify_sig(uint8_t* payload, size_t len, const uint8_t* hash, const uint8_t* pubkey);
-BIP15X_API uint8_t* sign(const btc_key*, const uint8_t* hash);
+BIP15X_API bool sign(const btc_key*, const uint8_t* hash, uint8_t* dest);
 
 BIP15X_API void hkdf(uint8_t *result, size_t resultSize,
    const uint8_t *salt, size_t ssize,
